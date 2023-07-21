@@ -13,7 +13,7 @@ const func: DeployFunction = async function(hre: HardhatRuntimeEnvironment) {
             execute: {
                 init: {
                     methodName: 'initialize',
-                    args: [],
+                    args: ['0x0000000000000000000000000000000000000000'],
                 },
                 // onUpgrade: {
                 //     methodName: 'afterUpgrade',
