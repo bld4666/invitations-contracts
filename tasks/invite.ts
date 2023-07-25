@@ -65,7 +65,7 @@ task("invite", "Invite a new account")
         console.log("tx", tx);
     })
 
-task("admin-invite", "Invite a new account")
+task("grant-role", "Invite a new account")
     .addOptionalParam("contract", "The contract address", "")
     .addOptionalParam("from", "The inviter's address", "")
     .addOptionalParam("invitee", "The invitees's address", "")
@@ -84,6 +84,8 @@ task("admin-invite", "Invite a new account")
         let signer = await ethers.getSigner(signerAddress);
 
         const Invitations = await ethers.getContractAt("Invitations", contractAddress, signer);
-        const tx = await Invitations.admInvite(taskArgs.invitee);
+        const tx = await Invitations.grantRole(await Invitations.INVITER_ROLE(), taskArgs.invitee);
         console.log("tx", tx);
     })
+
+

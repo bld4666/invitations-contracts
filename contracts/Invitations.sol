@@ -8,12 +8,16 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 error ZeroAddress();
 error CannotInvite();
 error AlreadyInvited();
+error InvalidReferralFeePercent();
 
 contract Invitations is Initializable, AccessControlUpgradeable {
     bytes32 public constant INVITER_ROLE = keccak256("INVITER_ROLE");
+    uint256 constant PRECISION = 10000;
 
     mapping(address => address) inviters;
     mapping(address => address[]) invitees;
+
+    uint256 public referralFeePercent;
 
     event Invited(address indexed inviter, address indexed invitee);
 
@@ -29,6 +33,11 @@ contract Invitations is Initializable, AccessControlUpgradeable {
         }
     }
 
+    function setReferralFeePercent(uint256 fp) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (fp > 1000) revert InvalidReferralFeePercent();
+        referralFeePercent = fp;
+    }
+
     function getInviter(address _invitee) external view returns (address) {
         return inviters[_invitee];
     }
@@ -37,14 +46,19 @@ contract Invitations is Initializable, AccessControlUpgradeable {
         return invitees[_inviter];
     }
 
-    // function admInvite(address _invitee) external onlyRole(INVITER_ROLE) {
-    //     address inviter = msg.sender;
-    //     if (_invitee == address(0)) revert ZeroAddress();
-    //     if (inviters[_invitee] != address(0)) revert AlreadyInvited();
-    //     inviters[_invitee] = inviter;
-    //     invitees[inviter].push(_invitee);
-    //     emit Invited(inviter, _invitee);
-    // }
+    function calculateReferralFees(address _invitee, uint256 _amount) external view returns (address[] memory, uint256[] memory) {
+        uint256 referralFee =  _amount * referralFeePercent / PRECISION;
+        address inviter = inviters[_invitee];
+        if (inviter == address(0)) return (new address[](0), new uint256[](0));
+        address[] memory resultRecv = new address[](2);
+        uint256[] memory resultAmount = new uint256[](2);
+        resultRecv[0] = _invitee;
+        resultRecv[1] = inviter;
+        resultAmount[0] = referralFee;
+        resultAmount[1] = referralFee;
+        return (resultRecv, resultAmount);
+    }
+
 
     function canInvite(address _inviter, address _invitee) public view returns (bool) {
         if (_inviter == address(0)) return false;
